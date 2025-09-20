@@ -16,8 +16,7 @@ export type Genre =
   | 'Psicologia'
   | 'Filosofia'
   | 'Poesia';
-
-export interface Book {
+  export interface Book {
   id: string;
   title: string;
   author: string;
@@ -31,3 +30,30 @@ export interface Book {
   status?: ReadingStatus;
   notes?: string;
 }
+
+export const STATUSES: ReadingStatus[] = [
+  'QUERO_LER',
+  'LENDO',
+  'LIDO',
+  'PAUSADO',
+  'ABANDONADO',
+];
+
+export const GENRES: Genre[] = [
+  'Literatura Brasileira',
+  'Ficção Científica',
+  'Realismo Mágico',
+  'Ficção',
+  'Fantasia',
+  'Romance',
+  'Biografia',
+  'História',
+  'Autoajuda',
+  'Tecnologia',
+  'Programação',
+  'Negócios',
+  'Psicologia',
+  'Filosofia',
+  'Poesia',
+];
+

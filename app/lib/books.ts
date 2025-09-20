@@ -10,7 +10,7 @@ export const initialBooks: Book[] = [
     pages: 256,
     rating: 5,
     synopsis: 'A história de Bento Santiago...',
-    cover: '/covers/dom-casmurro.jpg',
+    cover: 'https://www.livrariapolobooks.com.br/image/cache/catalog/Capa%20-%20Dom%20Casmurro-600x800.jpg',
     status: 'LIDO',
   },
   {
@@ -62,3 +62,9 @@ export const initialBooks: Book[] = [
     status: 'LIDO',
   },
 ];
+
+export async function getBook(id: string): Promise<Book | null> {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const book = initialBooks.find(book => book.id === id);
+  return book || null;
+}
