@@ -10,6 +10,7 @@ interface BookContextType {
   updateBook: (id: string, book: Partial<Book>) => void;
   deleteBook: (id: string) => void;
   getBookById: (id: string) => Book | undefined;
+  searchBooks: (input: string) => Book[]; 
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -42,14 +43,27 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     return books.find(book => book.id === id);
   };
 
+  const searchBooks = (input: string) => {
+    if (!input.trim()) return books;
+    return books.filter(
+      (book) =>
+        book.title.toLowerCase().includes(input.toLowerCase()) ||
+        book.author.toLowerCase().includes(input.toLowerCase()) ||
+        book.genre?.toLowerCase().includes(input.toLowerCase())
+    );
+  };
+
   return (
-    <BookContext.Provider value={{
-      books,
-      addBook,
-      updateBook,
-      deleteBook,
-      getBookById
-    }}>
+    <BookContext.Provider
+      value={{
+        books,
+        addBook,
+        updateBook,
+        deleteBook,
+        getBookById,
+        searchBooks,
+      }}
+    >
       {children}
     </BookContext.Provider>
   );
