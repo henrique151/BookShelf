@@ -8,13 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useBooks } from "@/contexts/BookContext";
+import { addBook } from "@/app/lib/actions";
 import { Book } from "@/types/book";
 
 export default function AddBookPage() {
   const router = useRouter();
-  const { addBook } = useBooks();
-  const [form, setForm] = useState<Partial<Omit<Book, "id" | "createdAt">>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<Omit<Book, "id" | "createdAt">>>({
+    status: "to-read" // Default status
+  });
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,14 +41,26 @@ export default function AddBookPage() {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     if (!form.title || !form.author || !form.status) {
-      // Basic validation
+      setError("Por favor, preencha todos os campos obrigatórios");
       return;
     }
-    addBook(form as Omit<Book, "id" | "createdAt">);
-    router.push("/books");
+
+    setIsSubmitting(true);
+
+    try {
+      await addBook(form as Omit<Book, "id" | "createdAt">);
+      router.push("/books");
+      router.refresh();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Erro ao adicionar livro");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -267,9 +282,18 @@ export default function AddBookPage() {
               </div>
             </div>
 
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded my-4">
+                {error}
+              </div>
+            )}
             <div className="flex justify-end mt-12">
-              <Button type="submit" className="px-8 py-4 text-lg font-bold">
-                Adicionar Livro
+              <Button
+                type="submit"
+                className="px-8 py-4 text-lg font-bold"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Adicionando..." : "Adicionar Livro"}
               </Button>
             </div>
           </form>
