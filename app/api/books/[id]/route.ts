@@ -1,135 +1,132 @@
-import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../lib/supabase";
-
-// Helper to format book data
-function formatBook(book: any) {
-  if (!book) return null;
-  const genres = book.book_genres ? book.book_genres.map((bg: any) => bg.genres).filter(Boolean) : [];
-  const { book_genres, ...rest } = book;
-  return {
-    ...rest,
-    genres,
-  };
-}
 
 // --- GET ---
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-
+  const { id: paramId } = await params;
+  const id = Number(paramId);
+  
   if (!id) {
-    return NextResponse.json({ error: "ID é obrigatório." }, { status: 400 });
+    return Response.json({ error: "ID é obrigatório." }, { status: 400 });
   }
 
-  try {
-    const { data: book, error } = await supabase
-      .from("books")
-      .select("*, book_genres(*, genres(*)))")
-      .eq("id", id)
-      .single();
+  const { data, error } = await supabase
+    .from("books")
+    .select(`
+      *,
+      book_genres(
+        genre_id,
+        genres(id, title)
+      )
+    `)
+    .eq("id", id)
+    .single();
 
-    if (error) {
-      throw error;
-    }
-
-    if (!book) {
-      return NextResponse.json(
-        { error: "Livro não encontrado." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(formatBook(book), { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Erro ao buscar livro." },
+  if (error) {
+    return Response.json(
+      { error: "Erro ao buscar livro", details: error.message },
       { status: 500 }
     );
   }
+
+  return Response.json({
+    ...data,
+    totalPages: data.total_pages,
+    currentPage: data.current_page,
+    coverUrl: data.cover_url,
+    createdAt: data.created_at,
+    genres: (data.book_genres ?? []).map((bg: any) => ({
+      id: bg.genres?.id,
+      title: bg.genres?.title ?? "",
+    })),
+  });
 }
 
-// --- PATCH ---
-type BookUpdateBody = {
-  title?: string;
-  author?: string;
-  status?: string;
-  genres?: { id: number }[];
-  genreIds?: number[];
-  pages?: number;
-  currentPage?: number;
-  totalPages?: number;
-  rating?: number;
-  coverUrl?: string;
-  synopsis?: string;
-  isbn?: number;
-  notes?: string;
-};
-
+// PATCH - atualizar livro
 export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-  const body = (await request.json()) as BookUpdateBody;
 
-  if (Object.keys(body).length === 0) {
-    return NextResponse.json(
-      { error: "Nenhum campo alterado para atualização." },
+  const { id: paramId } = await params;
+  const id = Number(paramId);
+  const body = await request.json();
+
+  if (!id) {
+    return Response.json({ error: "ID é obrigatório." }, { status: 400 });
+  }
+
+  if (!body || Object.keys(body).length === 0) {
+    return Response.json(
+      { error: "Nenhum campo alterado." },
       { status: 400 }
     );
   }
 
   try {
-    const { genres, genreIds, ...rest } = body;
-    const bookId = Number(id);
+    const { genres, totalPages, currentPage, coverUrl, book_genres, created_at, createdAt, ...rest } = body;
 
-    // Update book details
-    if (Object.keys(rest).length > 0) {
-      const { error: updateError } = await supabase
-        .from("books")
-        .update(rest)
-        .eq("id", bookId);
+    const updateData: any = {
+      ...rest,
+    };
 
-      if (updateError) {
-        throw updateError;
-      }
-    }
+    if (totalPages !== undefined) updateData.total_pages = totalPages;
+    if (currentPage !== undefined) updateData.current_page = currentPage;
+    if (coverUrl !== undefined) updateData.cover_url = coverUrl;
 
-    const newGenreIds = genreIds || (genres ? genres.map((g) => g.id) : null);
-
-    if (newGenreIds) {
-      // Delete existing genre associations
-      await supabase.from("book_genres").delete().eq("book_id", bookId);
-
-      // Insert new genre associations
-      if (newGenreIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from("book_genres")
-          .insert(newGenreIds.map((genre_id) => ({ book_id: bookId, genre_id })));
-
-        if (insertError) {
-          throw insertError;
-        }
-      }
-    }
-
-    // Fetch the updated book with genres
-    const { data: updatedBook, error: fetchError } = await supabase
+    const { error } = await supabase
       .from("books")
-      .select("*, book_genres(*, genres(*)))")
-      .eq("id", bookId)
+      .update(updateData)
+      .eq("id", id);
+
+    if (error) throw error;
+
+    // Atualizar gêneros se fornecidos
+    if (Array.isArray(genres)) {
+      await supabase.from("book_genres").delete().eq("book_id", id);
+      
+      if (genres.length > 0) {
+        await supabase
+          .from("book_genres")
+          .insert(genres.map((g: any) => ({ book_id: id, genre_id: g.id })));
+      }
+    }
+
+    // Buscar o livro atualizado
+    const { data: bookData } = await supabase
+      .from("books")
+      .select("*")
+      .eq("id", id)
       .single();
 
-    if (fetchError) {
-      throw fetchError;
-    }
+    // Buscar os gêneros separadamente
+    const { data: bookGenresData } = await supabase
+      .from("book_genres")
+      .select("genre_id, genres(id, title)")
+      .eq("book_id", id);
 
-    return NextResponse.json(formatBook(updatedBook), { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Erro ao atualizar livro." },
+    const updatedBook = {
+      ...bookData,
+      book_genres: bookGenresData || []
+    };
+
+    return Response.json({
+      ...updatedBook,
+      totalPages: updatedBook?.total_pages,
+      currentPage: updatedBook?.current_page,
+      coverUrl: updatedBook?.cover_url,
+      createdAt: updatedBook?.created_at,
+      genres: (updatedBook?.book_genres ?? []).map((bg: any) => ({
+        id: bg.genres?.id,
+        title: bg.genres?.title ?? "",
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    return Response.json(
+      { error: "Erro ao atualizar livro", details: (err as Error).message },
       { status: 500 }
     );
   }
@@ -137,34 +134,28 @@ export async function PATCH(
 
 // --- DELETE ---
 export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-
+  const { id: paramId } = await params;
+  const id = Number(paramId);
+  
   if (!id) {
-    return NextResponse.json(
-      { error: "ID é obrigatório para exclusão." },
-      { status: 400 }
-    );
+    return Response.json({ error: "ID é obrigatório." }, { status: 400 });
   }
 
   try {
-    const bookId = Number(id);
+    await supabase.from("book_genres").delete().eq("book_id", id);
+    
+    const { error } = await supabase.from("books").delete().eq("id", id);
+    
+    if (error) throw error;
 
-    // Delete genre associations first
-    await supabase.from("book_genres").delete().eq("book_id", bookId);
-
-    // Then delete the book
-    await supabase.from("books").delete().eq("id", bookId);
-
-    return NextResponse.json(
-      { message: "Livro deletado com sucesso." },
-      { status: 200 }
-    );
-  } catch {
-    return NextResponse.json(
-      { error: "Erro ao deletar livro." },
+    return Response.json({ message: "Livro deletado com sucesso." });
+  } catch (err) {
+    console.error(err);
+    return Response.json(
+      { error: "Erro ao deletar livro", details: (err as Error).message },
       { status: 500 }
     );
   }
