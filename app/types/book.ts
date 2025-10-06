@@ -1,37 +1,27 @@
-export type ReadingStatus = 'QUERO_LER' | 'LENDO' | 'LIDO' | 'PAUSADO' | 'ABANDONADO';
-
-export type Genre =
-  | 'Literatura Brasileira'
-  | 'Ficção Científica'
-  | 'Realismo Mágico'
-  | 'Ficção'
-  | 'Fantasia'
-  | 'Romance'
-  | 'Biografia'
-  | 'História'
-  | 'Autoajuda'
-  | 'Tecnologia'
-  | 'Programação'
-  | 'Negócios'
-  | 'Psicologia'
-  | 'Filosofia'
-  | 'Poesia';
+export type BookStatus = "TO_READ" | "READING" | "READ" | "PAUSED" | "FINISHED" | "ABANDONED"
 
 export interface Book {
-  id: string;
+  id: number;
+  createdAt: Date;
   title: string;
   author: string;
-  genre?: string;
+  status: BookStatus;
+  genres: Genre[];
   pages?: number;
   currentPage?: number;
   totalPages?: number;
-  status: 'to-read' | 'reading' | 'finished';
   rating?: number;
   coverUrl?: string;
   synopsis?: string;
-  createdAt: Date;
-  isbn?: string;
+  isbn?: number;
   notes?: string;
 }
 
+export interface Genre {
+  id: number;
+  title: string;
+  description?: string;
+  bookId: number;
+  book: Book;
+}
 

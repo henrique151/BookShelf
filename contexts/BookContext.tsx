@@ -1,8 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
 import { Book } from "../types/book";
-import { initialBooks } from "../data/initialBooks";
+import { getBooks } from "@/app/lib/actions";
 
 interface BookContextType {
   books: Book[];
@@ -11,17 +17,50 @@ interface BookContextType {
   deleteBook: (id: string) => void;
   getBookById: (id: string) => Book | undefined;
   searchBooks: (input: string) => Book[];
+  isLoading: boolean;
+  error: string | null;
+  refreshBooks: () => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
 
 export const BookProvider = ({ children }: { children: ReactNode }) => {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Função para buscar livros do servidor
+  const refreshBooks = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedBooks = await getBooks();
+      setBooks(fetchedBooks);
+      setError(null);
+    } catch (err) {
+      setError("Erro ao carregar livros");
+      console.error("Detailed book loading error:", JSON.stringify(err, null, 2));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Buscar livros inicialmente e configurar atualização automática
+  useEffect(() => {
+    refreshBooks();
+
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(() => {
+      refreshBooks();
+    }, 30000);
+
+    // Limpar o intervalo quando o componente for desmontado
+    return () => clearInterval(interval);
+  }, []);
 
   const addBook = (bookData: Omit<Book, "id" | "createdAt">) => {
     const newBook: Book = {
       ...bookData,
-      id: Date.now().toString(),
+      id: Math.floor(Math.random() * 10000), // Temporário, será substituído pelo ID do servidor
       createdAt: new Date(),
     };
     setBooks((prev) => [...prev, newBook]);
@@ -29,26 +68,32 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
 
   const searchBooks = (input: string) => {
     if (!input.trim()) return books;
+    const lowercasedInput = input.toLowerCase();
     return books.filter(
       (book) =>
-        book.title.toLowerCase().includes(input.toLowerCase()) ||
-        book.author.toLowerCase().includes(input.toLowerCase()) ||
-        book.genre?.toLowerCase().includes(input.toLowerCase())
+        book.title.toLowerCase().includes(lowercasedInput) ||
+        book.author.toLowerCase().includes(lowercasedInput) ||
+        book.genres.some((genre) =>
+          genre.title.toLowerCase().includes(lowercasedInput)
+        )
     );
   };
 
   const updateBook = (id: string, bookData: Partial<Book>) => {
+    const numId = parseInt(id, 10);
     setBooks((prev) =>
-      prev.map((book) => (book.id === id ? { ...book, ...bookData } : book))
+      prev.map((book) => (book.id === numId ? { ...book, ...bookData } : book))
     );
   };
 
   const deleteBook = (id: string) => {
-    setBooks((prev) => prev.filter((book) => book.id !== id));
+    const numId = parseInt(id, 10);
+    setBooks((prev) => prev.filter((book) => book.id !== numId));
   };
 
   const getBookById = (id: string) => {
-    return books.find((book) => book.id === id);
+    const numId = parseInt(id, 10);
+    return books.find((book) => book.id === numId);
   };
 
   return (
@@ -60,6 +105,9 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
         deleteBook,
         getBookById,
         searchBooks,
+        isLoading,
+        error,
+        refreshBooks,
       }}
     >
       {children}
