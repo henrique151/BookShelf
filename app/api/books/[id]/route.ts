@@ -25,6 +25,7 @@ export async function GET(
     .single();
 
   if (error) {
+    console.error('Supabase error:', error)
     return Response.json(
       { error: "Erro ao buscar livro", details: error.message },
       { status: 500 }

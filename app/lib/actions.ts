@@ -122,19 +122,34 @@ export async function getBook(id: string) {
 
 // Server action to get all books
 export async function getBooks() {
-    const response = await fetch(`${BASE_URL}/api/books`, {
-        cache: 'no-store',
-        headers: {
-            'Content-Type': 'application/json',
+    try {
+        const response = await fetch(`${BASE_URL}/api/books`, {
+            cache: 'no-store',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            let errorMessage = `Failed to fetch books (${response.status})`;
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.details || errorMessage;
+            } catch {
+                // Se não conseguir parsear JSON, tenta texto
+                const errorText = await response.text().catch(() => '');
+                if (errorText) errorMessage = errorText;
+            }
+
+            throw new Error(errorMessage);
         }
-    });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-        throw new Error(errorData.error || 'Failed to fetch books');
+        return response.json();
+    } catch (error) {
+        console.error('Error fetching books:', error);
+        throw error instanceof Error ? error : new Error('Failed to fetch books');
     }
-
-    return response.json();
 }
 
 // Server action to get all genres

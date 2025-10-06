@@ -17,7 +17,9 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
+    console.error('Supabase error:', error)
     return Response.json(
+
       { error: "Erro ao buscar livros", details: error.message },
       { status: 500 }
     );
@@ -74,6 +76,7 @@ export async function POST(request: Request) {
   } = body;
 
   if (!title || !author || !status) {
+
     return Response.json(
       { error: "Título, autor e status são obrigatórios" },
       { status: 400 }
@@ -144,7 +147,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (err) {
-    console.error(err);
+    console.error('Supabase error:', err)
     return Response.json(
       { error: "Erro ao criar livro", details: (err as Error).message },
       { status: 500 }
