@@ -33,9 +33,9 @@ export async function GET(
 
   return Response.json({
     ...data,
-    totalPages: data.total_pages,
-    currentPage: data.current_page,
-    coverUrl: data.cover_url,
+    totalPages: data.totalPages,
+    currentPage: data.currentPage,
+    coverUrl: data.coverUrl,
     createdAt: data.created_at,
     genres: (data.book_genres ?? []).map((bg: any) => ({
       id: bg.genres?.id,
@@ -72,9 +72,9 @@ export async function PATCH(
       ...rest,
     };
 
-    if (totalPages !== undefined) updateData.total_pages = totalPages;
-    if (currentPage !== undefined) updateData.current_page = currentPage;
-    if (coverUrl !== undefined) updateData.cover_url = coverUrl;
+    if (totalPages !== undefined) updateData.totalPages = totalPages;
+    if (currentPage !== undefined) updateData.currentPage = currentPage;
+    if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
 
     const { error } = await supabase
       .from("books")
@@ -114,9 +114,9 @@ export async function PATCH(
 
     return Response.json({
       ...updatedBook,
-      totalPages: updatedBook?.total_pages,
-      currentPage: updatedBook?.current_page,
-      coverUrl: updatedBook?.cover_url,
+      totalPages: updatedBook?.totalPages,
+      currentPage: updatedBook?.currentPage,
+      coverUrl: updatedBook?.coverUrl,
       createdAt: updatedBook?.created_at,
       genres: (updatedBook?.book_genres ?? []).map((bg: any) => ({
         id: bg.genres?.id,
