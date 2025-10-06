@@ -2,6 +2,8 @@ import { supabase } from "../../../lib/supabase";
 
 // GET - listar livros (com filtro opcional)
 export async function GET(request: Request) {
+  console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
+  console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING');
   const { searchParams } = new URL(request.url);
   const term = searchParams.get("term")?.toLowerCase() ?? "";
 
