@@ -109,9 +109,6 @@ export async function deleteBook(id: string) {
 
 // Server action to get a book by ID
 export async function getBook(id: string) {
-    const BASE_URL = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000';
     const response = await fetch(`${BASE_URL}/api/books/${id}`, {
         cache: 'no-store'
     });
@@ -125,9 +122,7 @@ export async function getBook(id: string) {
 
 // Server action to get all books
 export async function getBooks() {
-    const BASE_URL = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000';
+
     try {
         const response = await fetch(`${BASE_URL}/api/books`, {
             cache: 'no-store',
@@ -137,6 +132,7 @@ export async function getBooks() {
         });
 
         if (!response.ok) {
+            console.error("DEBUG MODE: Retornando lista vazia. O fetch real foi desabilitado.");
             let errorMessage = `Failed to fetch books (${response.status})`;
 
             try {

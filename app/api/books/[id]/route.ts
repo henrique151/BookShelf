@@ -17,6 +17,7 @@ export async function GET(
     : 'http://localhost:3000'; // OU SUA PORTA
 
   console.log('BASE URL para fetch:', BASE_URL); // ADICIONE ESTE LOG
+  console.error("DEBUG MODE: Retornando lista vazia. O fetch real foi desabilitado.");
 
   const { data, error } = await supabase
     .from("books")

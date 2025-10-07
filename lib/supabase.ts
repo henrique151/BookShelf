@@ -1,13 +1,13 @@
-// lib/supabase.ts (Modificado para Server-Side)
+// Exemplo de lib/supabase.ts (Ajuste a chave que você está usando: ANOM ou SERVICE_ROLE)
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL! // URL é pública
-// Use a chave de anon para o cliente front-end (se necessário)
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-// Use a chave de service_role para operações de Server-Side (com RLS ativada)
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Se estiver no servidor, use a SERVICE_ROLE_KEY
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Cliente principal (deve ser usado nas API Routes/Server Actions)
-export const supabase = createClient(supabaseUrl, supabaseServiceKey);
-// OU crie um cliente específico que use a Service Key para suas rotas:
-// export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey);
+if (!supabaseUrl || !supabaseKey) {
+    // Lança um erro claro no servidor se a chave estiver faltando
+    throw new Error("Missing Supabase URL or Key environment variables.");
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey);

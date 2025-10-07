@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     : 'http://localhost:3000'; // OU SUA PORTA
 
   console.log('BASE URL para fetch:', BASE_URL); // ADICIONE ESTE LOG
+  console.error("DEBUG MODE: Retornando lista vazia. O fetch real foi desabilitado.");
 
   const { searchParams } = new URL(request.url);
   const term = searchParams.get("term")?.toLowerCase() ?? "";
