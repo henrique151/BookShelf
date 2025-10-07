@@ -5,6 +5,12 @@ export async function GET(request: Request) {
   // No seu código original:
   // NOVA VERIFICAÇÃO DE LOG
 
+  const BASE_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'; // OU SUA PORTA
+
+  console.log('BASE URL para fetch:', BASE_URL); // ADICIONE ESTE LOG
+
   const { searchParams } = new URL(request.url);
   const term = searchParams.get("term")?.toLowerCase() ?? "";
 

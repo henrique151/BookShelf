@@ -7,10 +7,16 @@ export async function GET(
 ) {
   const { id: paramId } = await params;
   const id = Number(paramId);
-  
+
   if (!id) {
     return Response.json({ error: "ID é obrigatório." }, { status: 400 });
   }
+
+  const BASE_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'; // OU SUA PORTA
+
+  console.log('BASE URL para fetch:', BASE_URL); // ADICIONE ESTE LOG
 
   const { data, error } = await supabase
     .from("books")
@@ -87,7 +93,7 @@ export async function PATCH(
     // Atualizar gêneros se fornecidos
     if (Array.isArray(genres)) {
       await supabase.from("book_genres").delete().eq("book_id", id);
-      
+
       if (genres.length > 0) {
         await supabase
           .from("book_genres")
@@ -140,16 +146,16 @@ export async function DELETE(
 ) {
   const { id: paramId } = await params;
   const id = Number(paramId);
-  
+
   if (!id) {
     return Response.json({ error: "ID é obrigatório." }, { status: 400 });
   }
 
   try {
     await supabase.from("book_genres").delete().eq("book_id", id);
-    
+
     const { error } = await supabase.from("books").delete().eq("id", id);
-    
+
     if (error) throw error;
 
     return Response.json({ message: "Livro deletado com sucesso." });
