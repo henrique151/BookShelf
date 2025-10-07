@@ -2,8 +2,9 @@ import { supabase } from "../../../lib/supabase";
 
 // GET - listar livros (com filtro opcional)
 export async function GET(request: Request) {
-  console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
-  console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING');
+  // No seu código original:
+  // NOVA VERIFICAÇÃO DE LOG
+
   const { searchParams } = new URL(request.url);
   const term = searchParams.get("term")?.toLowerCase() ?? "";
 
@@ -26,6 +27,12 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  console.log('CHAVE ANÔNIMA (NEXT_PUBLIC_...):', anonKey ? `${anonKey.substring(0, 5)}...${anonKey.slice(-5)}` : 'MISSING');
+
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY; // SE VOCÊ TIVER ESTA CHAVE NO .env
+  console.log('CHAVE DE SERVIÇO (SUPABASE_...):', serviceKey ? `${serviceKey.substring(0, 5)}...${serviceKey.slice(-5)}` : 'MISSING');
 
   const books = (data ?? []).map((book: any) => ({
     id: book.id,
